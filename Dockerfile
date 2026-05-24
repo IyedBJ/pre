@@ -13,6 +13,9 @@ RUN apt-get update && apt-get install -y \
 # Set working directory
 WORKDIR /app
 
+# Allow pip to install packages system-wide
+ENV PIP_BREAK_SYSTEM_PACKAGES 1
+
 # Copy all files
 COPY . .
 
