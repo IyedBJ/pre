@@ -460,22 +460,6 @@ const SaisieGroupe = () => {
           id="zip-mileage" icon={<FileArchive size={32} />} theme={theme} accept=".zip" buttonText="Sélectionner ZIP" />
       </div>
 
-      <InvoiceSelector
-        filteredInvoices={invoices.filter(inv => {
-          const invDate = inv.date ? new Date(typeof inv.date === 'number' ? inv.date * 1000 : inv.date) : null;
-          if (!invDate) return false;
-          return invDate.getFullYear() === Number(selectedYear) && 
-                 String(invDate.getMonth() + 1).padStart(2, '0') === selectedMonth;
-        })}
-        selectedInvoiceIds={selectedInvoiceIds}
-        toggleInvoiceSelection={toggleInvoiceSelection}
-        formatCurrency={formatCurrency}
-        theme={theme}
-        monthNames={MONTH_NAMES}
-        selectedMonth={selectedMonth}
-        selectedYear={selectedYear}
-      />
-
       <GroupActions
         resetAll={resetAll}
         startExtraction={startExtraction}
