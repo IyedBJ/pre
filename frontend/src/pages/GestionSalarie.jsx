@@ -241,7 +241,11 @@ export default function GestionSalarie() {
                 >
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center gap-3">
-                      <img src={emp.avatar} alt={emp.nom} className="h-9 w-9 rounded-full object-cover" />
+                      <img 
+                        src={emp.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(emp.nom)}&background=random`} 
+                        alt={emp.nom} 
+                        className="h-9 w-9 rounded-full object-cover" 
+                      />
                       <div>
                         <div className="font-medium text-sm text-slate-900">{emp.nom}</div>
                         <div className="text-xs text-slate-500">{emp.email}</div>

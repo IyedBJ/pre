@@ -56,7 +56,27 @@ const app = express();
 
 // Middlewares globaux
 app.use(cors({
-    origin: '*', // Autorise tout pour le PFE (ou spécifiez vos domaines Vercel)
+    origin: (origin, callback) => {
+        // En développement local ou si l'origine est absente (ex: outils de test)
+        if (!origin) return callback(null, true);
+        
+        const allowedOrigins = [
+            'http://localhost:3000',
+            'http://localhost:5173',
+            'https://iyedbj.vercel.app'
+        ];
+        
+        // Autorise les domaines Vercel du projet ou les localhost
+        const isVercel = origin.endsWith('.vercel.app');
+        const isLocal = origin.startsWith('http://localhost:');
+        
+        if (allowedOrigins.indexOf(origin) !== -1 || isVercel || isLocal) {
+            callback(null, true);
+        } else {
+            // Pour le PFE, on peut être plus permissif si nécessaire
+            callback(null, true); // On autorise tout pour le moment
+        }
+    },
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
     credentials: true

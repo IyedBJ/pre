@@ -4,31 +4,22 @@ const { sequelize } = require('./config/db');
 const { Role, Employe, Projet, Client, Facture, DonneesMensuelles, Utilisateur } = require('./models');
 
 /**
- * Script de peuplement MASSIF V5 pour Elzei Rentabilité.
- * Inclut la création d'utilisateurs pour l'authentification locale (Login).
+ * Script de peuplement ULTRA-DETAIL V6 pour Elzei Rentabilité.
+ * Remplit TOUS les champs financiers avec des données logiques et variées.
  */
 async function seed() {
-  console.log('--- Nettoyage et Initialisation Propre 2026 (avec Utilisateurs) ---');
+  console.log('--- Initialisation ULTRA-DETAIL 2026 (Finances Réalistes) ---');
   try {
-    // 0. Nettoyage des tables
-    console.log('Réinitialisation des tables...');
+    // 0. Réinitialisation
+    console.log('Nettoyage des données existantes...');
     await Utilisateur.destroy({ where: {} });
     await Facture.destroy({ where: {} });
     await DonneesMensuelles.destroy({ where: {} });
 
-    // 1. Utilisateurs (pour le Login)
-    console.log('Création des comptes Utilisateurs...');
+    // 1. Utilisateurs
     const hashedPwd = await bcrypt.hash('admin123', 10);
-    await Utilisateur.create({
-      nomUtilisateur: 'admin',
-      motDePasse: hashedPwd,
-      rôle: 'admin'
-    });
-    await Utilisateur.create({
-        nomUtilisateur: 'iyed',
-        motDePasse: hashedPwd,
-        rôle: 'admin'
-      });
+    await Utilisateur.create({ nomUtilisateur: 'admin', motDePasse: hashedPwd, rôle: 'admin' });
+    await Utilisateur.create({ nomUtilisateur: 'iyed', motDePasse: hashedPwd, rôle: 'admin' });
 
     // 2. Rôles
     await Role.upsert({ id: 1, nom: 'Admin' });
@@ -36,7 +27,6 @@ async function seed() {
     await Role.upsert({ id: 3, nom: 'Salarié' });
 
     // 3. Clients
-    console.log('Configuration Clients...');
     const clients = [
       { dolibarrId: 'CL-A', nom: 'Airbus Systems', codeClient: 'AIR-2026' },
       { dolibarrId: 'CL-B', nom: 'Thales Digital', codeClient: 'THA-2026' },
@@ -47,90 +37,113 @@ async function seed() {
     for (const c of clients) await Client.upsert(c);
 
     // 4. Salariés
-    console.log('Configuration Salariés...');
     const employes = [
-      { id: 1, idEmployé: 'E001', nom: 'Mohamed Iyed', email: 'iyed@elzei.fr', idRôle: 1, tjm: 1000, salary: 6500 },
-      { id: 2, idEmployé: 'E002', nom: 'Sophie Bernard', email: 'sophie@elzei.fr', idRôle: 3, tjm: 800, salary: 5000 },
-      { id: 3, idEmployé: 'E003', nom: 'Lucas Petit', email: 'lucas@elzei.fr', idRôle: 3, tjm: 600, salary: 4200 },
-      { id: 4, idEmployé: 'E004', nom: 'Julie Martin', email: 'julie@elzei.fr', idRôle: 2, tjm: 500, salary: 4800 },
-      { id: 5, idEmployé: 'E005', nom: 'Thomas Dubois', email: 'thomas@elzei.fr', idRôle: 3, tjm: 850, salary: 5500 }
+      { id: 1, nom: 'Mohamed Iyed', tjm: 1000, baseSalary: 6500 },
+      { id: 2, nom: 'Sophie Bernard', tjm: 800, baseSalary: 5000 },
+      { id: 3, nom: 'Lucas Petit', tjm: 600, baseSalary: 4200 },
+      { id: 4, nom: 'Julie Martin', tjm: 500, baseSalary: 4800 },
+      { id: 5, nom: 'Thomas Dubois', tjm: 850, baseSalary: 5500 }
     ];
     for (const e of employes) {
       await Employe.upsert({ 
-        id: e.id, idEmployé: e.idEmployé, nom: e.nom, email: e.email, idRôle: e.idRôle, tjm: e.tjm, statut: 'Actif' 
+        id: e.id, idEmployé: `E00${e.id}`, nom: e.nom, email: `${e.nom.split(' ')[0].toLowerCase()}@elzei.fr`, 
+        idRôle: e.id === 1 ? 1 : 3, tjm: e.tjm, statut: 'Actif',
+        avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(e.nom)}&background=random`
       });
     }
 
     // 5. Projets
-    console.log('Configuration Projets...');
     const projets = [
-      { id: 1, titre: 'Modernisation ERP', ref: 'PRJ-AIR-01', empId: 1, cId: 'CL-A', cName: 'Airbus Systems', tjm: 1000 },
-      { id: 2, titre: 'Sécurisation Cyber', ref: 'PRJ-THA-02', empId: 2, cId: 'CL-B', cName: 'Thales Digital', tjm: 800 },
-      { id: 3, titre: 'Refonte Mobile', ref: 'PRJ-AF-03', empId: 3, cId: 'CL-C', cName: 'Air France', tjm: 600 },
-      { id: 4, titre: 'Transformation RH', ref: 'PRJ-INT-04', empId: 4, cId: 'CL-E', cName: 'Elzei Internal', tjm: 500 },
-      { id: 5, titre: 'Architecture Cloud', ref: 'PRJ-ORA-05', empId: 5, cId: 'CL-D', cName: 'Orange Business', tjm: 850 }
+      { id: 1, titre: 'Modernisation ERP', empId: 1, cId: 'CL-A', tjm: 1000 },
+      { id: 2, titre: 'Sécurisation Cyber', empId: 2, cId: 'CL-B', tjm: 800 },
+      { id: 3, titre: 'Refonte Mobile', empId: 3, cId: 'CL-C', tjm: 600 },
+      { id: 4, titre: 'Transformation RH', empId: 4, cId: 'CL-E', tjm: 500 },
+      { id: 5, titre: 'Architecture Cloud', empId: 5, cId: 'CL-D', tjm: 850 }
     ];
     for (const p of projets) {
       await Projet.upsert({
-        id: p.id, titre: p.titre, référence: p.ref, idEmployé: p.empId, 
-        idDolibarrClient: p.cId, nomClient: p.cName, tjm: p.tjm, statut: 'En cours', marge: 25
+        id: p.id, titre: p.titre, référence: `PRJ-${p.id}`, idEmployé: p.empId, 
+        idDolibarrClient: p.cId, nomClient: clients.find(c => c.dolibarrId === p.cId).nom, 
+        tjm: p.tjm, statut: 'En cours', marge: 30
       });
     }
 
-    // 6. Génération (12 mois 2026)
-    console.log('Génération propre (1 facture/projet/mois)...');
+    // 6. Génération Financière (12 mois x 5 salariés)
+    console.log('Gération des finances détaillées...');
     for (let m = 1; m <= 12; m++) {
       const moisStr = `2026-${String(m).padStart(2, '0')}`;
-      const timestamp = Math.floor(new Date(2026, m - 1, 15).getTime() / 1000);
+      const timestamp = Math.floor(new Date(2026, m - 1, 10).getTime() / 1000);
 
       for (const p of projets) {
         const emp = employes.find(e => e.id === p.empId);
-        const days = 20; 
-        const amountHt = p.tjm * days;
         
+        // --- Simulation de Facturation ---
+        const jours = 18 + (m % 4); // 18, 19, 20 ou 21 jours
+        const montantFacturé = p.tjm * jours;
+
         await Facture.create({
-          dolibarrId: `FAC-26-${String(m).padStart(2, '0')}-${p.id}`,
+          dolibarrId: `FAC2026-${m}-${p.id}`,
           référence: `FA26-${String(m).padStart(2, '0')}-${p.id}`,
           date: timestamp,
-          total_ht: amountHt,
-          total_ttc: amountHt * 1.2,
+          total_ht: montantFacturé,
+          total_ttc: montantFacturé * 1.2,
           statut: '1',
           payé: '1',
           idClient: p.cId,
-          nomClient: p.cName,
-          codeClient: clients.find(c => c.dolibarrId === p.cId).codeClient,
-          lignes: [{ subprice: p.tjm, qty: days, total_ht: amountHt, label: p.titre }],
+          nomClient: clients.find(c => c.dolibarrId === p.cId).nom,
+          lignes: [{ subprice: p.tjm, qty: jours, total_ht: montantFacturé, label: p.titre }],
           actif: true
         });
 
-        const chargesPatronales = emp.salary * 0.45;
-        const totalFrais = 400;
-        const coutTotal = emp.salary + chargesPatronales + totalFrais;
+        // --- CALCULS FINANCIERS RÉALISTES ---
+        const sBrut = emp.baseSalary + (m * 50); // légère augmentation mensuelle simulée
+        const cSalariales = sBrut * 0.22;
+        const sNetAvantPAS = sBrut - cSalariales;
+        const sNetApresPAS = sNetAvantPAS * 0.91; // 9% prélèvement à la source moyen
+        const cPatronales = sBrut * 0.44;
+        
+        const fRepas = 160 + (m * 5);
+        const fKilo = 250 + (m * 10);
+        const fAutres = 80 + (m * 2);
+        const tFrais = fRepas + fKilo + fAutres;
+        
+        const tCharges = cSalariales + cPatronales;
+        const sNetHorsRepas = sNetApresPAS - (fRepas * 0.5); // Simulation simplifiée
+        
+        const coutTotal = sBrut + cPatronales + tFrais;
+        const rentabilite = montantFacturé - coutTotal;
+        const pctRent = (rentabilite / montantFacturé) * 100;
 
         await DonneesMensuelles.create({
           idEmployé: emp.id,
           idProjet: p.id,
           mois: moisStr,
           tjm: p.tjm,
-          joursTravaillés: days,
-          montantFacturé: amountHt,
+          joursTravaillés: jours,
+          montantFacturé: montantFacturé,
           facturePayée: true,
-          salaireBrut: emp.salary,
-          salaireNetAvantPAS: emp.salary * 0.75,
-          salaireNetApresPAS: emp.salary * 0.70,
-          chargesPatronales: chargesPatronales,
-          chargesSalariales: emp.salary * 0.22,
-          totalFrais: totalFrais,
+          salaireBrut: sBrut,
+          salaireNetAvantPAS: sNetAvantPAS,
+          salaireNetApresPAS: sNetApresPAS,
+          salaireNetHorsRepas: sNetHorsRepas,
+          fraisRepas: fRepas,
+          fraisKilometriques: fKilo,
+          autresFrais: fAutres,
+          chargesSalariales: cSalariales,
+          chargesPatronales: cPatronales,
+          totalFrais: tFrais,
+          totalCharges: tCharges,
           coutTotal: coutTotal,
-          rentabilite: amountHt - coutTotal,
-          pourcentageRentabilite: ((amountHt - coutTotal) / amountHt) * 100
+          rentabilite: rentabilite,
+          pourcentageRentabilite: pctRent,
+          totalPercu: sNetApresPAS + tFrais,
+          extra: m % 3 === 0 ? 500 : 0 // Prime tous les 3 mois
         });
       }
     }
 
-    console.log('--- Initialisation PROPRE v5 terminée ! ---');
-    console.log('IDENTIFIANTS DE TEST :');
-    console.log('Utilisateur: admin / Mot de passe: admin123');
+    console.log('--- Initialisation ULTRA-DETAIL terminée ! ---');
+    console.log('Comptes : admin / admin123');
     await sequelize.close();
     process.exit(0);
   } catch (err) {
