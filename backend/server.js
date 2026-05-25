@@ -55,24 +55,26 @@ syncDB(); // Exécution de la synchronisation au démarrage
 const app = express();
 
 // Middlewares globaux
-app.use((req, res, next) => {
-    const origin = req.headers.origin;
-    // On autorise tout ce qui est Vercel ou Localhost
-    if (origin && (origin.endsWith('.vercel.app') || origin.startsWith('http://localhost'))) {
-        res.setHeader('Access-Control-Allow-Origin', origin);
-    } else {
-        res.setHeader('Access-Control-Allow-Origin', '*');
-    }
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
-
-    // Réponse immédiate pour le Preflight (OPTIONS)
-    if (req.method === 'OPTIONS') {
-        return res.sendStatus(200);
-    }
-    next();
-});
+app.use(cors({
+    origin: (origin, callback) => {
+        // En développement local ou si l'origine est absente (ex: outils de test)
+        if (!origin) return callback(null, true);
+        
+        // Autorise les domaines Vercel du projet ou les localhost
+        const isVercel = origin.endsWith('.vercel.app');
+        const isLocal = origin.startsWith('http://localhost:');
+        
+        if (isVercel || isLocal) {
+            callback(null, true);
+        } else {
+            // Fallback pour la production principale
+            callback(null, true);
+        }
+    },
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    credentials: true
+}));
 
 app.use(express.json());    // Parse automatiquement le JSON des requêtes entrantes
 
