@@ -48,7 +48,7 @@ router.delete('/:id', async (req, res) => {
     const count = await Employe.count({
       where: {
         [Op.or]: [
-          { roleId: role.id },
+          { idRôle: role.id },
           { rôle: role.nom }
         ]
       }
