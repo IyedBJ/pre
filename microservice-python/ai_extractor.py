@@ -274,7 +274,9 @@ def process_text_data(text, mode=None):
     Par défaut, extrait tout (Finances + Profil si possible).
     """
     if mode == "profile":
-        return {"raw_text": text[:5000]} # Pour Regex frontend
+        result = extract_employee_groq(text)
+        result["raw_text"] = text[:5000] # Pour Regex frontend (fallback)
+        return result
         
     text_clean = clean_text(text)
     
