@@ -286,10 +286,13 @@ const SaisieGroupe = () => {
         setLoadingCard(prev => ({ ...prev, payslips: true }));
         setExtractionStep('Extraction des fiches de paie...');
         try {
-          const [financialItems, profileItems] = await Promise.all([
-            extractZip(zipFiles.payslips, 'payslips'),
-            extractZip(zipFiles.payslips, 'payslips', 'profile')
-          ]);
+          const financialItems = await extractZip(zipFiles.payslips, 'payslips');
+          // Unified mode returns both financial and profile data
+          const profileItems = financialItems.map(item => ({ 
+              filename: item.filename, 
+              nom: item.nom || item.name, 
+              raw_text: item.raw_text 
+          }));
           identifyAndGroup(financialItems, profileItems, 'payslips');
         } catch (e) {
           toast.error("Erreur lors de l'extraction des fiches de paie");
@@ -305,10 +308,12 @@ const SaisieGroupe = () => {
         setLoadingCard(prev => ({ ...prev, expenses: true }));
         setExtractionStep('Extraction des notes de frais...');
         try {
-          const [financialItems, profileItems] = await Promise.all([
-            extractZip(zipFiles.expenses, 'expenses'),
-            extractZip(zipFiles.expenses, 'expenses', 'profile')
-          ]);
+          const financialItems = await extractZip(zipFiles.expenses, 'expenses');
+          const profileItems = financialItems.map(item => ({ 
+              filename: item.filename, 
+              nom: item.nom || item.name, 
+              raw_text: item.raw_text 
+          }));
           identifyAndGroup(financialItems, profileItems, 'expenses');
         } catch (e) {
           toast.error("Erreur lors de l'extraction des notes de frais");
@@ -324,10 +329,12 @@ const SaisieGroupe = () => {
         setLoadingCard(prev => ({ ...prev, mileage: true }));
         setExtractionStep('Extraction des frais kilométriques...');
         try {
-          const [financialItems, profileItems] = await Promise.all([
-            extractZip(zipFiles.mileage, 'mileage'),
-            extractZip(zipFiles.mileage, 'mileage', 'profile')
-          ]);
+          const financialItems = await extractZip(zipFiles.mileage, 'mileage');
+          const profileItems = financialItems.map(item => ({ 
+              filename: item.filename, 
+              nom: item.nom || item.name, 
+              raw_text: item.raw_text 
+          }));
           identifyAndGroup(financialItems, profileItems, 'mileage');
         } catch (e) {
           toast.error("Erreur lors de l'extraction des frais kilométriques");

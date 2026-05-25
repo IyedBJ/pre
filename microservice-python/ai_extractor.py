@@ -268,16 +268,38 @@ def extract_excel_data(file_path, ext=None):
             os.remove(temp_path)
 
 def process_text_data(text, mode=None):
+    """
+    Traite le texte pour extraire les données.
+    Si mode='profile', n'extrait que les infos salariés (plus rapide).
+    Par défaut, extrait tout (Finances + Profil si possible).
+    """
     if mode == "profile":
-        return {"raw_text": text[:5000]} # Returns the first 5000 chars for frontend Regex matching
-    text = clean_text(text)
-    return extract_groq(text)
+        return {"raw_text": text[:5000]} # Pour Regex frontend
+        
+    text_clean = clean_text(text)
+    
+    # On extrait les finances par défaut
+    result = extract_groq(text_clean)
+    
+    # On tente d'extraire AUSSI le nom pour l'auto-matching, sauf si mode spécifique
+    if mode != 'financial_only':
+        profile = extract_employee_groq(text)
+        result["nom"] = profile.get("nom")
+        result["numSécu"] = profile.get("numSécu")
+        result["adresse"] = profile.get("adresse")
+        
+    return result
 
 def extract_financial_data(file_path, file_ext, mode=None):
     if file_ext in ['.xlsx', '.xls']:
         if mode == 'profile':
             return extract_employee_excel(file_path, file_ext)
-        return extract_excel_data(file_path, file_ext)
+        
+        result = extract_excel_data(file_path, file_ext)
+        if mode != 'financial_only':
+            profile = extract_employee_excel(file_path, file_ext)
+            result.update(profile)
+        return result
     
     if is_pdf_scanned(file_path):
         text = extract_text_ocr(file_path) 

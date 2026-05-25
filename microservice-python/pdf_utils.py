@@ -48,8 +48,8 @@ def extract_text_ocr(pdf_path):
     text = ""
 
     try:
-        # Convertir les pages PDF en images
-        pages = convert_from_path(pdf_path, dpi=300)
+        # Convertir les pages PDF en images (DPI 200 pour économiser la RAM)
+        pages = convert_from_path(pdf_path, dpi=200)
 
         for page in pages:
 

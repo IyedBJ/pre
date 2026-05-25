@@ -13,15 +13,28 @@ load_dotenv()
 if not os.getenv("DB_HOST"):
     load_dotenv(os.path.join(os.path.dirname(__file__), '..', 'backend', '.env'))
 
+_cached_config = None
+
 def get_groq_config():
     """
     Tries to fetch GROQ_API_KEY and GROQ_MODEL from the database.
     Falls back to environment variables if database access fails.
+    Caches the result to avoid redundant DB calls in batch processing.
     """
+    global _cached_config
+    if _cached_config:
+        return _cached_config
+
     config = {
         "api_key": os.getenv("GROQ_API_KEY"),
         "model": os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
     }
+    
+    # Tentative d'accès à la DB (seulement si non trouvé dans env ou pour vérifier mises à jour)
+    # Pour un PFE, on privilégie la vitesse : si on a déjà la clé dans l'env, on peut sauter la DB
+    if config["api_key"] and os.getenv("SKIP_DB_CONFIG") == "true":
+        _cached_config = config
+        return config
 
     host = os.getenv("DB_HOST")
     user = os.getenv("DB_USER")
@@ -30,14 +43,17 @@ def get_groq_config():
         # Try to load from backend .env if not loaded yet
         backend_env = os.path.join(os.path.dirname(__file__), '..', 'backend', '.env')
         if os.path.exists(backend_env):
+            from dotenv import load_dotenv
             load_dotenv(backend_env)
             host = os.getenv("DB_HOST")
             user = os.getenv("DB_USER")
-            if host: config["api_key"] = os.getenv("GROQ_API_KEY")
+            if host and not config["api_key"]: 
+                config["api_key"] = os.getenv("GROQ_API_KEY")
 
     try:
         if host and user:
             # We use a short timeout for DB connection to avoid hanging
+            import mysql.connector
             conn = mysql.connector.connect(
                 host=host,
                 port=int(os.getenv("DB_PORT", 3306)),
@@ -45,7 +61,7 @@ def get_groq_config():
                 password=os.getenv("DB_PASS"),
                 database=os.getenv("DB_NAME"),
                 ssl_disabled=False if os.getenv("DB_SSL") == "true" else True,
-                connect_timeout=5
+                connect_timeout=2 # Réduit à 2s
             )
             cursor = conn.cursor(dictionary=True)
             
@@ -57,6 +73,8 @@ def get_groq_config():
             
             # Fetch GROQ_MODEL
             cursor.execute("SELECT value FROM configurations WHERE `key` = 'GROQ_MODEL'")
+            row = row or cursor.fetchone() # fallback model
+            cursor.execute("SELECT value FROM configurations WHERE `key` = 'GROQ_MODEL'")
             row = cursor.fetchone()
             if row and row['value']:
                 config["model"] = row['value']
@@ -65,11 +83,9 @@ def get_groq_config():
             conn.close()
     except Exception as e:
         import sys
-        sys.stderr.write(f"[Groq Utils] Info: Database config fetch skipped/failed ({str(e)}). Using env/defaults.\n")
+        sys.stderr.write(f"[Groq Utils] Info: Database config fetch skipped/failed. Using env/defaults.\n")
     
-    if not config["api_key"]:
-         sys.stderr.write("[Groq Utils] Warning: GROQ_API_KEY is missing in both DB and .env\n")
-
+    _cached_config = config
     return config
 
 def extract_fallback(text):

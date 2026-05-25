@@ -121,7 +121,7 @@ def process_zip(zip_path, employee_name, file_type, mode=None):
         except Exception as e:
             return {"filename": f_name, "error": str(e)}
 
-    with ThreadPoolExecutor(max_workers=5) as executor:
+    with ThreadPoolExecutor(max_workers=1) as executor:
         results = list(executor.map(process_file, all_files_info))
 
     shutil.rmtree(temp_dir, ignore_errors=True)
