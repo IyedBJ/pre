@@ -37,17 +37,21 @@ router.post('/', async (req, res) => {
     const dolibarrApi = await getDolibarrApi();
     const source_instance = dolibarrApi.defaults.baseURL || 'default_erp';
 
+    console.log(`[Sync] Démarrage de la récupération Dolibarr (Limit: 10000)...`);
+    
     const [clientsResponse, invoicesResponse] = await Promise.all([
       dolibarrApi.get('/thirdparties', {
-        params: { limit: 100000, sortfield: 't.nom', sortorder: 'ASC' }
+        params: { limit: 10000, sortfield: 't.nom', sortorder: 'ASC' }
       }),
       dolibarrApi.get('/invoices', {
-        params: { limit: 100000 }
+        params: { limit: 10000 }
       })
     ]);
 
     const dolibarrClients = ensureArray(clientsResponse.data);
     const dolibarrInvoices = ensureArray(invoicesResponse.data);
+    
+    console.log(`[Sync] Reçus: ${dolibarrClients.length} tiers, ${dolibarrInvoices.length} factures.`);
     
     // Archiver tous les clients et factures existants avant la nouvelle synchro
     await Client.update({ actif: false }, { where: {} });
@@ -124,6 +128,7 @@ router.post('/', async (req, res) => {
 
     if (clientsToUpsert.length > 0) {
       try {
+        console.log(`[Sync] Envoi en base: ${clientsToUpsert.length} tiers...`);
         await Client.bulkCreate(clientsToUpsert, {
           updateOnDuplicate: [
             'nom', 'email', 'codeClient', 'adresse', 'codePostal', 'ville', 'phone', 
@@ -132,6 +137,7 @@ router.post('/', async (req, res) => {
             'réfDernièreFacture', 'dateDernièreFacture', 'dernièreSync', 'logo', 'actif'
           ]
         });
+        console.log(`[Sync] Tiers mis à jour.`);
       } catch (clientErr) {
         throw new Error(`Erreur lors de la mise à jour des clients: ${clientErr.message}`);
       }
@@ -163,6 +169,7 @@ router.post('/', async (req, res) => {
 
     if (invoicesToUpsert.length > 0) {
       try {
+        console.log(`[Sync] Envoi en base: ${invoicesToUpsert.length} factures...`);
         await Facture.bulkCreate(invoicesToUpsert, {
           updateOnDuplicate: [
             'référence', 'date', 'dateEchéance', 'total_ht', 'total_ttc', 
@@ -170,6 +177,7 @@ router.post('/', async (req, res) => {
             'nomClient', 'codeClient', 'lignes', 'actif'
           ]
         });
+        console.log(`[Sync] Factures mises à jour.`);
       } catch (invErr) {
         throw new Error(`Erreur lors de la mise à jour des factures: ${invErr.message}`);
       }

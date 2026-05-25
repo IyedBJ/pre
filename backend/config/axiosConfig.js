@@ -31,6 +31,7 @@ const getDolibarrApi = async () => {
   // Création de l'instance Axios avec l'URL de base et les en-têtes fixes
   const instance = axios.create({
     baseURL,
+    timeout: 30000, // Timeout de 30 secondes pour éviter les blocages en prod
     headers: {
       'DOLIAPIKEY': apiKey,   // Clé API dans l'en-tête (standard Dolibarr)
       'Accept': 'application/json' // On demande une réponse JSON

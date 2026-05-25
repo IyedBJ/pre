@@ -1,25 +1,41 @@
 require('dotenv').config();
+const bcrypt = require('bcryptjs');
 const { sequelize } = require('./config/db');
-const { Role, Employe, Projet, Client, Facture, DonneesMensuelles } = require('./models');
+const { Role, Employe, Projet, Client, Facture, DonneesMensuelles, Utilisateur } = require('./models');
 
 /**
- * Script de peuplement MASSIF V4 pour Elzei Rentabilité.
- * Assure un état PROPRE : supprime les anciennes données et recrée exactement une facture par projet/mois.
+ * Script de peuplement MASSIF V5 pour Elzei Rentabilité.
+ * Inclut la création d'utilisateurs pour l'authentification locale (Login).
  */
 async function seed() {
-  console.log('--- Nettoyage et Initialisation Propre 2026 ---');
+  console.log('--- Nettoyage et Initialisation Propre 2026 (avec Utilisateurs) ---');
   try {
-    // 0. Nettoyage des tables pour garantir "une seule facture"
-    console.log('Réinitialisation des tables Facture et DonneesMensuelles...');
+    // 0. Nettoyage des tables
+    console.log('Réinitialisation des tables...');
+    await Utilisateur.destroy({ where: {} });
     await Facture.destroy({ where: {} });
     await DonneesMensuelles.destroy({ where: {} });
 
-    // 1. Rôles
+    // 1. Utilisateurs (pour le Login)
+    console.log('Création des comptes Utilisateurs...');
+    const hashedPwd = await bcrypt.hash('admin123', 10);
+    await Utilisateur.create({
+      nomUtilisateur: 'admin',
+      motDePasse: hashedPwd,
+      rôle: 'admin'
+    });
+    await Utilisateur.create({
+        nomUtilisateur: 'iyed',
+        motDePasse: hashedPwd,
+        rôle: 'admin'
+      });
+
+    // 2. Rôles
     await Role.upsert({ id: 1, nom: 'Admin' });
     await Role.upsert({ id: 2, nom: 'Financier' });
     await Role.upsert({ id: 3, nom: 'Salarié' });
 
-    // 2. Clients
+    // 3. Clients
     console.log('Configuration Clients...');
     const clients = [
       { dolibarrId: 'CL-A', nom: 'Airbus Systems', codeClient: 'AIR-2026' },
@@ -30,7 +46,7 @@ async function seed() {
     ];
     for (const c of clients) await Client.upsert(c);
 
-    // 3. Salariés
+    // 4. Salariés
     console.log('Configuration Salariés...');
     const employes = [
       { id: 1, idEmployé: 'E001', nom: 'Mohamed Iyed', email: 'iyed@elzei.fr', idRôle: 1, tjm: 1000, salary: 6500 },
@@ -45,7 +61,7 @@ async function seed() {
       });
     }
 
-    // 4. Projets
+    // 5. Projets
     console.log('Configuration Projets...');
     const projets = [
       { id: 1, titre: 'Modernisation ERP', ref: 'PRJ-AIR-01', empId: 1, cId: 'CL-A', cName: 'Airbus Systems', tjm: 1000 },
@@ -61,21 +77,20 @@ async function seed() {
       });
     }
 
-    // 5. Génération (12 mois 2026)
+    // 6. Génération (12 mois 2026)
     console.log('Génération propre (1 facture/projet/mois)...');
     for (let m = 1; m <= 12; m++) {
       const moisStr = `2026-${String(m).padStart(2, '0')}`;
-      const timestamp = Math.floor(new Date(2026, m - 1, 15).getTime() / 1000); // 15 du mois
+      const timestamp = Math.floor(new Date(2026, m - 1, 15).getTime() / 1000);
 
       for (const p of projets) {
         const emp = employes.find(e => e.id === p.empId);
-        const days = 19; // Stable 19 jours pour une lecture propre
+        const days = 20; 
         const amountHt = p.tjm * days;
         
-        // UNIQUE Facture par projet et par mois
         await Facture.create({
           dolibarrId: `FAC-26-${String(m).padStart(2, '0')}-${p.id}`,
-          référence: `FA-26-${String(m).padStart(2, '0')}-${p.id}`,
+          référence: `FA26-${String(m).padStart(2, '0')}-${p.id}`,
           date: timestamp,
           total_ht: amountHt,
           total_ttc: amountHt * 1.2,
@@ -88,7 +103,6 @@ async function seed() {
           actif: true
         });
 
-        // UNIQUE Donnée Mensuelle par projet et par mois
         const chargesPatronales = emp.salary * 0.45;
         const totalFrais = 400;
         const coutTotal = emp.salary + chargesPatronales + totalFrais;
@@ -114,7 +128,9 @@ async function seed() {
       }
     }
 
-    console.log('--- Initialisation PROPRE terminée avec succès ! ---');
+    console.log('--- Initialisation PROPRE v5 terminée ! ---');
+    console.log('IDENTIFIANTS DE TEST :');
+    console.log('Utilisateur: admin / Mot de passe: admin123');
     await sequelize.close();
     process.exit(0);
   } catch (err) {
