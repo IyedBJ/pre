@@ -23,8 +23,15 @@ exports.extractFinancialData = (req, res) => {
     // Récupération d'un éventuel mode d'extraction passé dans le body de la requête
     const mode = req.body.mode || "";
     
-    // Lancement du processus Python
     const pythonProcess = spawn(pythonPath, [scriptPath, filePath, fileExt, mode]);
+    
+    // Gérer l'erreur de lancement (ex: binaire introuvable)
+    pythonProcess.on("error", (err) => {
+        console.error(`[Extraction] Erreur spawn: ${err.message}`);
+        if (!res.headersSent) {
+            res.status(500).json({ error: "Impossible de lancer le moteur d'IA", details: err.message });
+        }
+    });
 
     let dataString = "";  // Accumulateur de la sortie standard (stdout)
     let errorString = ""; // Accumulateur des erreurs (stderr)
@@ -90,6 +97,14 @@ exports.extractZipData = (req, res) => {
         fileType || "unknown",
         mode
     ]);
+
+    // Gérer l'erreur de lancement
+    pythonProcess.on("error", (err) => {
+        console.error(`[ZIP] Erreur spawn: ${err.message}`);
+        if (!res.headersSent) {
+            res.status(500).json({ error: "Impossible de lancer le traitement du dossier ZIP", details: err.message });
+        }
+    });
 
     let dataString = "";
     let errorString = "";
