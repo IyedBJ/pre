@@ -84,56 +84,58 @@ def extract_employee_excel(file_path, ext=None):
 
         nom    = None
         prenom = None
-        desig_col = None  # column index of 'Désignation'
+        desig_col = None
 
         all_rows = list(rows_iter)
 
-        # ── Pass 1 : look for Nom/Prénom label cells and Désignation header ──
         for ri, row in enumerate(all_rows):
             for ci, cell in enumerate(row):
-                cell_low = cell.lower()
+                cell_str = str(cell).strip()
+                cell_low = cell_str.lower()
 
-                # Pattern 1a: cell is exactly 'nom' or 'nom :' or 'salarié'
-                if re.fullmatch(r'(?:nom|salari[eé]|collaborateur|agent)\s*:?', cell_low):
-                    # Next non-empty cell on the same row is the value
-                    for offset in range(1, min(6, len(row) - ci)):
-                        candidate = row[ci + offset].strip()
-                        if candidate and candidate.lower() not in (':', ''):
-                            nom = candidate
-                            break
-
-                # Pattern 1b: cell is exactly 'prénom' or 'prenom'
+                # Keywords for name/employee
+                keywords = r'(?:nom|salari[eé]|collaborateur|agent|b[eé]n[eé]ficiaire|intervenant|nom\s*&\s*pr[eé]nom)\s*:?'
+                if re.search(keywords, cell_low):
+                    if ':' in cell_str:
+                        val = cell_str.split(':', 1)[1].strip()
+                        if val and len(val) > 2:
+                            nom = val
+                    if not nom:
+                        for offset in range(1, min(6, len(row) - ci)):
+                            candidate = str(row[ci + offset]).strip()
+                            if candidate and candidate.lower() not in (':', '', 'none'):
+                                nom = candidate
+                                break
+                
                 if re.fullmatch(r'pr[eé]nom\s*:?', cell_low):
                     for offset in range(1, min(6, len(row) - ci)):
-                        candidate = row[ci + offset].strip()
-                        if candidate and candidate.lower() not in (':', ''):
+                        candidate = str(row[ci + offset]).strip()
+                        if candidate and candidate.lower() not in (':', '', 'none'):
                             prenom = candidate
                             break
-
-                # Pattern 2: header cell is 'désignation'
+                
                 if re.fullmatch(r'd[ée]signation', cell_low):
                     desig_col = ci
 
-        # ── Pass 2 : if Désignation column found, scan it for salary line ──
-        if desig_col is not None:
-            salary_pattern = re.compile(
-                r'salaire\s+mensuel.*?[-–]\s*([a-zA-ZÀ-ÿ]+(?:\s+[a-zA-ZÀ-ÿ]+)*)',
-                re.IGNORECASE
-            )
+        if not nom and desig_col is not None:
+            salary_pattern = re.compile(r'salaire\s+mensuel.*?[-–]\s*([a-zA-ZÀ-ÿ]+(?:\s+[a-zA-ZÀ-ÿ]+)*)', re.IGNORECASE)
             for row in all_rows:
                 if desig_col < len(row):
-                    cell = row[desig_col]
+                    cell = str(row[desig_col])
                     m = salary_pattern.search(cell)
                     if m:
-                        raw_name = m.group(1).strip()
-                        # raw_name might be "saif harrathi" → title-case it
-                        return {"nom": raw_name.title()}
+                        nom = m.group(1).strip().title()
+                        break
 
-        # ── Build name from Nom + Prénom ──────────────────────────────────
+        if not nom and not prenom:
+            fname = os.path.basename(file_path).lower()
+            name_match = re.search(r'(?:_| -)([a-zà-ÿ]{3,}(?:[_\s-][a-zà-ÿ]{2,})+)', fname)
+            if name_match: nom = name_match.group(1).replace('_', ' ').replace('-', ' ').title()
+
         if nom or prenom:
             parts = []
             if prenom: parts.append(prenom.strip().title())
-            if nom:    parts.append(nom.strip().upper())
+            if nom:    parts.append(nom.strip().upper() if not prenom else nom.strip().title())
             return {"nom": " ".join(parts) if parts else None}
 
         return {"nom": None}
@@ -289,6 +291,7 @@ def process_text_data(text, mode=None):
         result["nom"] = profile.get("nom")
         result["numSécu"] = profile.get("numSécu")
         result["adresse"] = profile.get("adresse")
+        result["raw_text"] = text[:5000] # Ajouté pour le matching frontend
         
     return result
 

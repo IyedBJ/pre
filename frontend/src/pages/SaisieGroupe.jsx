@@ -236,19 +236,26 @@ const SaisieGroupe = () => {
            const rawText = rawTextByFile[item.filename].toLowerCase();
            matched = employees.find(emp => {
                const nom = (emp.nom || '').toLowerCase().trim();
-               // Exact match
-               if (nom.length > 3 && rawText.includes(nom)) return true;
+               if (nom.length <= 3) return false;
+
+               // 1. Exact match
+               if (rawText.includes(nom)) return true;
                
-               // Split parts
-               const parts = nom.split(/\s+/).filter(Boolean);
+               // 2. Partial/Permuted Match
+               const parts = nom.split(/\s+/).filter(p => p.length > 2);
                if (parts.length >= 2) {
                    // Reversed Match (Last First)
                    const reversed = parts.slice().reverse().join(' ');
                    if (rawText.includes(reversed)) return true;
                    
-                   // All parts appear anywhere in the text
-                   const allPartsExist = parts.every(p => p.length > 2 && rawText.includes(p));
-                   if (allPartsExist) return true;
+                   // All parts appear anywhere in a 100-char window (more robust than global check)
+                   const allPartsFound = parts.every(p => rawText.includes(p));
+                   if (allPartsFound) {
+                       // Check if they are close to each other
+                       const indices = parts.map(p => rawText.indexOf(p));
+                       const dist = Math.max(...indices) - Math.min(...indices);
+                       if (dist < 150) return true;
+                   }
                }
                return false;
            }) || null;
@@ -272,9 +279,23 @@ const SaisieGroupe = () => {
           : `unassigned_${fileType}_${item.filename || Math.random()}`;
         const displayName     = finalMatch?.nom || null;
 
-        const dateGroupFromItem = item.date_group && item.date_group !== 'Unknown' ? item.date_group : dateGroup;
+        const itemDate = item.date_group && item.date_group !== 'Unknown' ? item.date_group : null;
+        let finalDateGroup = dateGroup; // Default to selected month
 
-        addToMap(key, displayName, finalMatch?.id || null, { ...item, type: fileType, date_group: dateGroupFromItem });
+        if (itemDate) {
+            const [selYr, selMo] = dateGroup.split('-').map(Number);
+            const [itYr, itMo] = itemDate.split('-').map(Number);
+            
+            // If it matches exactly or is just 1 month before (common for periodic docs), use user's selected mois
+            const monthDiff = (selYr * 12 + selMo) - (itYr * 12 + itMo);
+            if (monthDiff === 0 || monthDiff === 1) {
+                finalDateGroup = dateGroup;
+            } else {
+                finalDateGroup = itemDate; // significantly different (e.g. old year or distant month)
+            }
+        }
+
+        addToMap(key, displayName, finalMatch?.id || null, { ...item, type: fileType, date_group: finalDateGroup });
       });
     };
 
