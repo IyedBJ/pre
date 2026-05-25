@@ -112,16 +112,25 @@ const runForecaster = (history, res, nMonths = 6) => {
 
   // ---------- ÉTAPE 4 : Appel du microservice Python ----------
   const scriptPath = path.join(__dirname, "../../microservice-python/forecaster.py");
-  // Idéalement, rendre le chemin Python configurable via variable d'environnement
-  const pythonPath = "C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python311\\python.exe";
+  
+  // Utilise l'environnement (ex: python3 sur Render) ou le chemin par défaut
+  const pythonPath = process.env.PYTHON_PATH || "python3";
 
-  // Lancement du script Python : on lui passe l'empreinte JSON et le nombre de mois
+  // Lancement du script Python
   const pythonProcess = spawn(pythonPath, [scriptPath, dataFingerprint, nMonths.toString()]);
 
   let dataString = "";
   let errorString = "";
 
-  // Collecte de la sortie standard (stdout) – le JSON produit par Python
+  // Gestion des erreurs de lancement (ex: python non trouvé)
+  pythonProcess.on("error", (err) => {
+    console.error(`[Forecast] Failed to start python process: ${err.message}`);
+    if (!res.headersSent) {
+      res.status(500).json({ error: "Could not start prediction engine", detail: err.message });
+    }
+  });
+
+  // Collecte de la sortie standard (stdout)
   pythonProcess.stdout.on("data", (data) => {
     dataString += data.toString();
   });
@@ -135,10 +144,13 @@ const runForecaster = (history, res, nMonths = 6) => {
   pythonProcess.on("close", (code) => {
     if (code !== 0) {
       console.error(`[Forecast] Python Error: ${errorString}`);
-      return res.status(500).json({
-        error: "Prediction script failed",
-        details: errorString
-      });
+      if (!res.headersSent) {
+        return res.status(500).json({
+          error: "Prediction script failed",
+          details: errorString
+        });
+      }
+      return;
     }
     try {
       // Parsing du JSON retourné par Python

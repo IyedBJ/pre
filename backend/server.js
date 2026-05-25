@@ -55,7 +55,13 @@ syncDB(); // Exécution de la synchronisation au démarrage
 const app = express();
 
 // Middlewares globaux
-app.use(cors());            // Autorise les requêtes cross-origin (ex: frontend React sur port 3000)
+app.use(cors({
+    origin: '*', // Autorise tout pour le PFE (ou spécifiez vos domaines Vercel)
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    credentials: true
+}));
+
 app.use(express.json());    // Parse automatiquement le JSON des requêtes entrantes
 
 // Route de test
