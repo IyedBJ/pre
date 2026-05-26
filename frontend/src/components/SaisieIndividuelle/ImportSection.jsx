@@ -43,8 +43,8 @@ const ImportSection = ({
         />
 
         <ImportCard
-          title="Fiche de paie PDF/ZIP"
-          description="Extraction auto (PDF) ou Analyse Salariés (ZIP)"
+          title="Fiche de paie PDF"
+          description="Extraction auto (PDF)"
           icon={FileText}
           isImported={payslipImported}
           isLoading={isPayslipLoading}
@@ -57,7 +57,7 @@ const ImportSection = ({
 
         <ImportCard
           title="Notes de frais"
-          description="Extraction auto PDF ou Excel"
+          description="Extraction auto Excel"
           icon={Receipt}
           isImported={expensesImported}
           isLoading={isExpensesLoading}
