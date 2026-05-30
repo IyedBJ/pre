@@ -3,7 +3,7 @@ from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 import os
-
+# C’est un décorateur qui transforme la fonction driver en une ressource réutilisable dans les tests / scope="module" signifie que le même driver sera utilisé pour tous les tests du module, et sera fermé à la fin du module.
 @pytest.fixture(scope="module")
 def driver():
     # Path to chromedriver.exe relative to root

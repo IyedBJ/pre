@@ -361,7 +361,7 @@ export default function Dashboard() {
                 <PieChart className="text-emerald-500" size={24} />
                 <h2 className="text-lg font-bold">Répartition Clients</h2>
               </div>
-              <p className="text-xs opacity-50 mb-4">Top 5 par Chiffre d'Affaire</p>
+              <p className="text-xs opacity-50 mb-4">Top 10 par Chiffre d'Affaire</p>
               <div className="h-[250px] w-full mt-auto relative">
                 <ResponsivePie
                   data={clientDistribution}

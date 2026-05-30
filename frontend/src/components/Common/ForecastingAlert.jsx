@@ -3,7 +3,7 @@ import { AlertTriangle, TrendingUp, TrendingDown, BrainCircuit, Activity } from 
 import api from '../../api/axios';
 
 /**
- * Composant ForecastingAlert
+ * Composant ForecastingAlert de la page historiques
  * Affiche les prévisions financières (marge, rentabilité) pour un projet ou pour l'entreprise entière.
  * Il interroge l'API backend `/forecast/global` ou `/forecast/:projectId`.
  * Gère les états de chargement, d'erreur, et affiche les résultats (cartes de prévisions + alerte).

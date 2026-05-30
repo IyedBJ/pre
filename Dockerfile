@@ -23,7 +23,7 @@ COPY . .
 WORKDIR /app/backend
 RUN npm install
 
-# Install Python dependencies
+# Install Python dependencies Autoriser l’installation de paquets Python système
 WORKDIR /app/microservice-python
 RUN pip3 install --no-cache-dir -r requirements.txt
 

@@ -195,12 +195,12 @@ const UnifiedResultCard = ({
       return;
     }
     if (!selectedInvoiceId) {
-      toast.error('Veuillez sélectionner une facture Dolibarr');
+      toast.error('Veuillez sélectionner une facture');
       return;
     }
 
     setIsDolibarrLoading(true);
-    const toastId = toast.loading('Récupération depuis Dolibarr...');
+    const toastId = toast.loading('Récupération depuis...');
     try {
       const res = await api.get(`/factures/${selectedInvoiceId}`);
       const invoiceData = res.data;
