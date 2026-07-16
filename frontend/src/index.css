@@ -1,0 +1,135 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #7ED957;
+  --color-secondary: #05B6D3;
+  --background-image-login-bg-img: url('/src/assets/login-bg.jpg');
+}
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --bg-sidebar: #7ED957; 
+  --sidebar-active: #ffffff;
+}
+
+
+
+@layer base {
+  html, body, #root {
+    height: 100%;
+    overflow: hidden;
+    margin: 0;
+    padding: 0;
+  }
+
+  html {
+    font-family: "Poppins", sans-serif;
+  }
+  
+  body {
+    @apply bg-slate-50 text-slate-900 transition-colors duration-300;
+  }
+
+  .dark body {
+    @apply bg-gray-900 text-slate-100;
+  }
+}
+
+@layer components {
+  .input-box {
+    @apply w-full text-sm bg-[#7ED957]/20 border-[1.5px] border-transparent px-5 py-4 rounded mb-4 outline-none transition-all focus:border-[#7ED957]/50;
+  }
+
+  .btn-primary {
+    @apply w-full text-sm font-semibold text-white bg-[#7ED957] p-4 rounded-lg my-1 hover:bg-[#6cc94a] transition-all uppercase tracking-wide;
+  }
+
+  .btn-secondary {
+    @apply w-full text-sm font-semibold text-[#7ED957] bg-[#7ED957]/20 p-4 rounded-lg my-1 hover:bg-[#7ED957] hover:text-white transition-all uppercase tracking-wide;
+  }
+}
+
+
+.dark {
+  & .bg-white, & .bg-slate-50, & .bg-gray-50 {
+    background-color: #1f2937 !important;
+  }
+  
+  & input:not([type="checkbox"]):not([type="radio"]), 
+  & select, & textarea {
+    background-color: #111827 !important;
+    color: #f9fafb !important;
+    border-color: #374151 !important;
+  }
+
+  & table {
+    background-color: #1f2937 !important;
+    border-color: #374151 !important;
+  }
+  
+  & th {
+    background-color: #111827 !important;
+    color: #f9fafb !important;
+    border-color: #374151 !important;
+  }
+  
+  & td {
+    border-color: #374151 !important;
+  }
+
+  & h1, & h2, & h3, & h4, & h5, & h6 {
+    color: #f9fafb !important;
+  }
+  
+  & .text-slate-900, & .text-slate-800, & .text-gray-900, & .text-black, & .text-gray-800 {
+    color: #f9fafb !important;
+  }
+  
+  & .text-slate-700, & .text-gray-700, & .text-slate-600, & .text-gray-600, & .text-slate-500, & .text-gray-500 {
+    color: #cbd5e1 !important; 
+  }
+
+  & .hover\:bg-slate-50:hover, 
+  & .hover\:bg-gray-50:hover, 
+  & .hover\:bg-slate-50\/50:hover,
+  & .hover\:bg-gray-50\/50:hover {
+    background-color: #374151 !important; 
+  }
+
+  & .bg-slate-50\/50, & .bg-gray-50\/50, & .bg-slate-100, & .bg-gray-100 {
+    background-color: #000000 !important;
+  }
+
+  & .swal2-popup {
+    background-color: #111827 !important;
+    color: #f9fafb !important;
+    border: 1px solid #374151 !important;
+  }
+  & .swal2-title, & .swal2-html-container, & .swal2-content {
+    color: #f9fafb !important;
+  }
+  & .swal2-confirm {
+    background-color: #7ED957 !important;
+    color: #000000 !important;
+    font-weight: 700 !important;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.15s ease-out forwards;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

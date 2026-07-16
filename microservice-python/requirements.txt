@@ -1,0 +1,13 @@
+pdfplumber
+pytesseract
+Pillow
+requests
+pdf2image
+openpyxl
+pandas
+scikit-learn
+numpy
+prophet
+groq
+python-dotenv
+mysql-connector-python
